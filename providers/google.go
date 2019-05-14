@@ -8,12 +8,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
+	"github.com/pusher/oauth2_proxy/logger"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	admin "google.golang.org/api/admin/directory/v1"
@@ -27,6 +27,12 @@ type GoogleProvider struct {
 	// GroupValidator is a function that determines if the passed email is in
 	// the configured Google group.
 	GroupValidator func(string) bool
+}
+
+type claims struct {
+	Subject       string `json:"sub"`
+	Email         string `json:"email"`
+	EmailVerified bool   `json:"email_verified"`
 }
 
 // NewGoogleProvider initiates a new GoogleProvider
@@ -64,7 +70,7 @@ func NewGoogleProvider(p *ProviderData) *GoogleProvider {
 	}
 }
 
-func emailFromIDToken(idToken string) (string, error) {
+func claimsFromIDToken(idToken string) (*claims, error) {
 
 	// id_token is a base64 encode ID token payload
 	// https://developers.google.com/accounts/docs/OAuth2Login#obtainuserinfo
@@ -72,24 +78,21 @@ func emailFromIDToken(idToken string) (string, error) {
 	jwtData := strings.TrimSuffix(jwt[1], "=")
 	b, err := base64.RawURLEncoding.DecodeString(jwtData)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
-	var email struct {
-		Email         string `json:"email"`
-		EmailVerified bool   `json:"email_verified"`
-	}
-	err = json.Unmarshal(b, &email)
+	c := &claims{}
+	err = json.Unmarshal(b, c)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	if email.Email == "" {
-		return "", errors.New("missing email")
+	if c.Email == "" {
+		return nil, errors.New("missing email")
 	}
-	if !email.EmailVerified {
-		return "", fmt.Errorf("email %s not listed as verified", email.Email)
+	if !c.EmailVerified {
+		return nil, fmt.Errorf("email %s not listed as verified", c.Email)
 	}
-	return email.Email, nil
+	return c, nil
 }
 
 // Redeem exchanges the OAuth2 authentication token for an ID token
@@ -138,8 +141,7 @@ func (p *GoogleProvider) Redeem(redirectURL, code string) (s *SessionState, err 
 	if err != nil {
 		return
 	}
-	var email string
-	email, err = emailFromIDToken(jsonResponse.IDToken)
+	c, err := claimsFromIDToken(jsonResponse.IDToken)
 	if err != nil {
 		return
 	}
@@ -148,7 +150,8 @@ func (p *GoogleProvider) Redeem(redirectURL, code string) (s *SessionState, err 
 		IDToken:      jsonResponse.IDToken,
 		ExpiresOn:    time.Now().Add(time.Duration(jsonResponse.ExpiresIn) * time.Second).Truncate(time.Second),
 		RefreshToken: jsonResponse.RefreshToken,
-		Email:        email,
+		Email:        c.Email,
+		User:         c.Subject,
 	}
 	return
 }
@@ -167,18 +170,18 @@ func (p *GoogleProvider) SetGroupRestriction(groups []string, adminEmail string,
 func getAdminService(adminEmail string, credentialsReader io.Reader) *admin.Service {
 	data, err := ioutil.ReadAll(credentialsReader)
 	if err != nil {
-		log.Fatal("can't read Google credentials file:", err)
+		logger.Fatal("can't read Google credentials file:", err)
 	}
 	conf, err := google.JWTConfigFromJSON(data, admin.AdminDirectoryUserReadonlyScope, admin.AdminDirectoryGroupReadonlyScope)
 	if err != nil {
-		log.Fatal("can't load Google credentials file:", err)
+		logger.Fatal("can't load Google credentials file:", err)
 	}
 	conf.Subject = adminEmail
 
 	client := conf.Client(oauth2.NoContext)
 	adminService, err := admin.New(client)
 	if err != nil {
-		log.Fatal(err)
+		logger.Fatal(err)
 	}
 	return adminService
 }
@@ -186,7 +189,7 @@ func getAdminService(adminEmail string, credentialsReader io.Reader) *admin.Serv
 func userInGroup(service *admin.Service, groups []string, email string) bool {
 	user, err := fetchUser(service, email)
 	if err != nil {
-		log.Printf("error fetching user: %v", err)
+		logger.Printf("error fetching user: %v", err)
 		return false
 	}
 	id := user.Id
@@ -196,9 +199,9 @@ func userInGroup(service *admin.Service, groups []string, email string) bool {
 		members, err := fetchGroupMembers(service, group)
 		if err != nil {
 			if err, ok := err.(*googleapi.Error); ok && err.Code == 404 {
-				log.Printf("error fetching members for group %s: group does not exist", group)
+				logger.Printf("error fetching members for group %s: group does not exist", group)
 			} else {
-				log.Printf("error fetching group members: %v", err)
+				logger.Printf("error fetching group members: %v", err)
 				return false
 			}
 		}
@@ -274,7 +277,7 @@ func (p *GoogleProvider) RefreshSessionIfNeeded(s *SessionState) (bool, error) {
 	s.AccessToken = newToken
 	s.IDToken = newIDToken
 	s.ExpiresOn = time.Now().Add(duration).Truncate(time.Second)
-	log.Printf("refreshed access token %s (expired on %s)", s, origExpiration)
+	logger.Printf("refreshed access token %s (expired on %s)", s, origExpiration)
 	return true, nil
 }
 

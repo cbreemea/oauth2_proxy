@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"io"
 	"io/ioutil"
-	"log"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -16,6 +15,7 @@ import (
 	"time"
 
 	"github.com/mbland/hmacauth"
+	"github.com/pusher/oauth2_proxy/logger"
 	"github.com/pusher/oauth2_proxy/providers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,7 +23,7 @@ import (
 )
 
 func init() {
-	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
+	logger.SetFlags(logger.Lshortfile)
 
 }
 
@@ -263,7 +263,7 @@ func (tp *TestProvider) ValidateSessionState(session *providers.SessionState) bo
 
 func TestBasicAuthPassword(t *testing.T) {
 	providerServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("%#v", r)
+		logger.Printf("%#v", r)
 		var payload string
 		switch r.URL.Path {
 		case "/oauth/token":
@@ -291,8 +291,7 @@ func TestBasicAuthPassword(t *testing.T) {
 	opts.Validate()
 
 	providerURL, _ := url.Parse(providerServer.URL)
-	const emailAddress = "michael.bland@gsa.gov"
-	const username = "michael.bland"
+	const emailAddress = "john.doe@example.com"
 
 	opts.provider = NewTestProvider(providerURL, emailAddress)
 	proxy := NewOAuthProxy(opts, func(email string) bool {
@@ -335,7 +334,9 @@ func TestBasicAuthPassword(t *testing.T) {
 	rw = httptest.NewRecorder()
 	proxy.ServeHTTP(rw, req)
 
-	expectedHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(username+":"+opts.BasicAuthPassword))
+	// The username in the basic auth credentials is expected to be equal to the email address from the
+	// auth response, so we use the same variable here.
+	expectedHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(emailAddress+":"+opts.BasicAuthPassword))
 	assert.Equal(t, expectedHeader, rw.Body.String())
 	providerServer.Close()
 }
@@ -355,7 +356,7 @@ func NewPassAccessTokenTest(opts PassAccessTokenTestOptions) *PassAccessTokenTes
 
 	t.providerServer = httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("%#v", r)
+			logger.Printf("%#v", r)
 			var payload string
 			switch r.URL.Path {
 			case "/oauth/token":
@@ -654,13 +655,13 @@ func (p *ProcessCookieTest) LoadCookiedSession() (*providers.SessionState, time.
 func TestLoadCookiedSession(t *testing.T) {
 	pcTest := NewProcessCookieTestWithDefaults()
 
-	startSession := &providers.SessionState{Email: "michael.bland@gsa.gov", AccessToken: "my_access_token"}
+	startSession := &providers.SessionState{Email: "john.doe@example.com", AccessToken: "my_access_token"}
 	pcTest.SaveSession(startSession, time.Now())
 
 	session, _, err := pcTest.LoadCookiedSession()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, startSession.Email, session.Email)
-	assert.Equal(t, "michael.bland", session.User)
+	assert.Equal(t, "john.doe@example.com", session.User)
 	assert.Equal(t, startSession.AccessToken, session.AccessToken)
 }
 
