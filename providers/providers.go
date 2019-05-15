@@ -29,6 +29,8 @@ func New(provider string, p *ProviderData) Provider {
 		return NewGitHubProvider(p)
 	case "azure":
 		return NewAzureProvider(p)
+	case "azure.v2":
+		return NewAzureV2Provider(p)
 	case "gitlab":
 		return NewGitLabProvider(p)
 	case "oidc":

@@ -25,8 +25,11 @@ func (p *ProviderData) Redeem(redirectURL, code string) (s *SessionState, err er
 	params.Add("client_secret", p.ClientSecret)
 	params.Add("code", code)
 	params.Add("grant_type", "authorization_code")
-	if p.ProtectedResource != nil && p.ProtectedResource.String() != "" {
-		params.Add("resource", p.ProtectedResource.String())
+
+	if p.ProviderName != "azure.v2" {
+		if p.ProtectedResource != nil && p.ProtectedResource.String() != "" {
+			params.Add("resource", p.ProtectedResource.String())
+		}
 	}
 
 	var req *http.Request

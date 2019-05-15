@@ -776,7 +776,6 @@ func (p *OAuthProxy) OAuthCallback(rw http.ResponseWriter, req *http.Request) {
 		p.ErrorPage(rw, 403, "Permission Denied", "csrf failed")
 		return
 	}
-
 	if !p.IsValidRedirect(redirect) {
 		redirect = "/"
 	}
