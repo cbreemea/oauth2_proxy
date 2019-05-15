@@ -27,4 +27,4 @@ COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/jwt_signing_key.pem /
 
 USER 2000:2000
 
-ENTRYPOINT ["/bin/oauth2_proxy"]
+ENTRYPOINT ["/bin/oauth2_proxy",  "-config", "test.cfg"]
