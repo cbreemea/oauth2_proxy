@@ -1,14 +1,12 @@
 package providers
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
 
-	"github.com/pusher/oauth2_proxy/api"
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/pusher/oauth2_proxy/logger"
-	"golang.org/x/oauth2/jws"
 )
 
 // AzureV2Provider represents an AzureV2 based Identity Provider
@@ -65,42 +63,18 @@ func getAzureV2Header(accessToken string) http.Header {
 }
 
 // GetEmailAddress returns the Account email address
-func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (string, error) {
-	fmt.Printf("%+v\n", *s)
+func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err error) {
 
-	claimSet, err := jws.Decode(s.AccessToken)
-	if err != nil {
-		panic(err)
-	}
+	tokenString := s.AccessToken
+	claims := jwt.MapClaims{}
+	_, err = jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte("<YOUR VERIFICATION KEY>"), nil
+	})
 
-	var email string
-
-	if s.AccessToken == "" {
-		return "", errors.New("missing access token")
-	}
-	req, err := http.NewRequest("GET", p.ProfileURL.String(), nil)
-	if err != nil {
-		return "", err
-	}
-	req.Header = getAzureV2Header(s.AccessToken)
-
-	json, err := api.Request(req)
-
-	if err != nil {
-		return "", err
-	}
-
-	email, err = getEmailFromJSON(json)
-
-	if err == nil && email != "" {
-		return email, err
-	}
-
-	email, err = json.Get("userPrincipalName").String()
-
-	if err != nil {
-		logger.Printf("failed making request %s", err)
-		return "", err
+	for key, val := range claims {
+		if key == "email" {
+			email = val.(string)
+		}
 	}
 
 	if email == "" {
