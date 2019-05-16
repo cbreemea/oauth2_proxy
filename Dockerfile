@@ -30,4 +30,4 @@ COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/cbre/landx/templates 
 
 USER 2000:2000
 
-ENTRYPOINT ["/bin/oauth2_proxy",  "-config", "/test.cfg", "-custom-templates-dir", "/templates", "-http-address", "0.0.0.0:4180"]
+ENTRYPOINT ["/bin/oauth2_proxy",  "-config", "/test.cfg"]
