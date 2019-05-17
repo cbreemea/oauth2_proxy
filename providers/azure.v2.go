@@ -62,14 +62,40 @@ func getAzureV2Header(accessToken string) http.Header {
 	return header
 }
 
-// GetEmailAddress returns the Account email address
-func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err error) {
-
-	tokenString := s.AccessToken
-	claims := jwt.MapClaims{}
-	_, err = jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+func (p *AzureV2Provider) getClaims(accessToken string) (claims jwt.MapClaims, err error) {
+	_, err = jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte("<YOUR VERIFICATION KEY>"), nil
 	})
+
+	return
+}
+
+// GetUser returns the Account oid
+func (p *AzureV2Provider) GetUserName(s *SessionState) (user string, err error) {
+	claims, err := p.getClaims(s.AccessToken)
+	if err != nil {
+		return
+	}
+
+	for key, val := range claims {
+		if key == "oid" {
+			user = val.(string)
+		}
+	}
+
+	if user == "" {
+		logger.Printf("failed to get email address")
+	}
+
+	return
+}
+
+// GetEmailAddress returns the Account email address
+func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err error) {
+	claims, err := p.getClaims(s.AccessToken)
+	if err != nil {
+		return
+	}
 
 	getEmail := func(k string) {
 		if email != "" {
