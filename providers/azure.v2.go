@@ -71,11 +71,20 @@ func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err er
 		return []byte("<YOUR VERIFICATION KEY>"), nil
 	})
 
-	for key, val := range claims {
-		if key == "email" {
-			email = val.(string)
+	getEmail := func(k string) {
+		if email != "" {
+			return
+		}
+
+		for key, val := range claims {
+			if key == k {
+				email = val.(string)
+			}
 		}
 	}
+
+	getEmail("email")
+	getEmail("unique_name")
 
 	if email == "" {
 		logger.Printf("failed to get email address")
