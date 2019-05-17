@@ -62,12 +62,14 @@ func getAzureV2Header(accessToken string) http.Header {
 	return header
 }
 
-func (p *AzureV2Provider) getClaims(accessToken string) (claims jwt.MapClaims, err error) {
-	_, err = jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte("<YOUR VERIFICATION KEY>"), nil
+func (p *AzureV2Provider) getClaims(accessToken string) (jwt.MapClaims, error) {
+	claims := jwt.MapClaims{}
+	_, _ = jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(""), nil
 	})
 
-	return
+	// TODO: Will Azure provide signing key
+	return claims, nil
 }
 
 // GetUser returns the Account oid
@@ -84,7 +86,7 @@ func (p *AzureV2Provider) GetUserName(s *SessionState) (user string, err error) 
 	}
 
 	if user == "" {
-		logger.Printf("failed to get email address")
+		logger.Printf("failed to get user address")
 	}
 
 	return
@@ -96,6 +98,8 @@ func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err er
 	if err != nil {
 		return
 	}
+
+	fmt.Println(claims)
 
 	getEmail := func(k string) {
 		if email != "" {
