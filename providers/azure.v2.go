@@ -99,8 +99,6 @@ func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err er
 		return
 	}
 
-	fmt.Println(claims)
-
 	getEmail := func(k string) {
 		if email != "" {
 			return
@@ -114,12 +112,14 @@ func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err er
 	}
 
 	getEmail("email")
-	getEmail("unique_name")
+	getEmail("upn")
 
 	if email == "" {
 		logger.Printf("failed to get email address")
 		return "", err
 	}
+
+	fmt.Println(email)
 
 	return email, err
 }
