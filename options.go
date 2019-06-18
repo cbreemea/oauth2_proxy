@@ -25,8 +25,6 @@ import (
 // Options holds Configuration Options that can be set by Command Line Flag,
 // or Config File
 type Options struct {
-	AllowedOrigin string `flag:"allowed-origin" cfg:"allowed_origin" env:"OAUTH2_PROXY_ALLOWED_ORIGIN"`
-
 	ProxyPrefix     string `flag:"proxy-prefix" cfg:"proxy-prefix" env:"OAUTH2_PROXY_PROXY_PREFIX"`
 	ProxyWebSockets bool   `flag:"proxy-websockets" cfg:"proxy_websockets" env:"OAUTH2_PROXY_PROXY_WEBSOCKETS"`
 	HTTPAddress     string `flag:"http-address" cfg:"http_address" env:"OAUTH2_PROXY_HTTP_ADDRESS"`
@@ -128,7 +126,6 @@ type SignatureData struct {
 // NewOptions constructs a new Options with defaulted values
 func NewOptions() *Options {
 	return &Options{
-		AllowedOrigin:         "localhost:3000",
 		ProxyPrefix:           "/oauth2",
 		ProxyWebSockets:       true,
 		HTTPAddress:           "127.0.0.1:4180",
