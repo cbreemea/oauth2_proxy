@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strings"
 
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/pusher/oauth2_proxy/logger"
@@ -121,5 +122,5 @@ func (p *AzureV2Provider) GetEmailAddress(s *SessionState) (email string, err er
 		return "", err
 	}
 
-	return email, err
+	return strings.ToLower(email), err
 }
