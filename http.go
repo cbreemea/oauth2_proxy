@@ -16,8 +16,19 @@ type Server struct {
 	Opts    *Options
 }
 
+// TODO add ENABLE_CORS to config options
+func enableCors(handler http.Handler, allowedOrigin string) http.HandlerFunc {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+		handler.ServeHTTP(w, r)
+	})
+}
+
 // ListenAndServe will serve traffic on HTTP or HTTPS depending on TLS options
 func (s *Server) ListenAndServe() {
+	s.Handler = enableCors(s.Handler, s.Opts.AllowedOrigin)
+
 	if s.Opts.TLSKeyFile != "" || s.Opts.TLSCertFile != "" {
 		s.ServeHTTPS()
 	} else {
