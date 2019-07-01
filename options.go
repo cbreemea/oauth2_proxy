@@ -25,9 +25,10 @@ import (
 // Options holds Configuration Options that can be set by Command Line Flag,
 // or Config File
 type Options struct {
-	AllowedOrigin string `flag:"allowed-origin" cfg:"allowed_origin" env:"OAUTH2_PROXY_ALLOWED_ORIGIN"`
+	AllowedOrigin   string `flag:"allowed-origin" cfg:"allowed_origin" env:"OAUTH2_PROXY_ALLOWED_ORIGIN"`
+	SupressWarnings bool   `flag:"supress-warnings" cfg:"supress_warnings" env:"OAUTH2_PROXY_SUPRESS_WARNINGS"`
 
-	ProxyPrefix     string `flag:"proxy-prefix" cfg:"proxy-prefix" env:"OAUTH2_PROXY_PROXY_PREFIX"`
+	ProxyPrefix     string `flag:"proxy-prefix" cfg:"proxy_prefix" env:"OAUTH2_PROXY_PROXY_PREFIX"`
 	ProxyWebSockets bool   `flag:"proxy-websockets" cfg:"proxy_websockets" env:"OAUTH2_PROXY_PROXY_WEBSOCKETS"`
 	HTTPAddress     string `flag:"http-address" cfg:"http_address" env:"OAUTH2_PROXY_HTTP_ADDRESS"`
 	HTTPSAddress    string `flag:"https-address" cfg:"https_address" env:"OAUTH2_PROXY_HTTPS_ADDRESS"`
@@ -161,6 +162,7 @@ func NewOptions() *Options {
 		RequestLoggingFormat:  logger.DefaultRequestLoggingFormat,
 		AuthLogging:           true,
 		AuthLoggingFormat:     logger.DefaultAuthLoggingFormat,
+		SupressWarnings:       false,
 	}
 }
 

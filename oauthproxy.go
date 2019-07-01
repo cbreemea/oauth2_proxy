@@ -93,6 +93,7 @@ type OAuthProxy struct {
 	compiledRegex       []*regexp.Regexp
 	templates           *template.Template
 	Footer              string
+	SupressWarnings     bool
 }
 
 // UpstreamProxy represents an upstream server to proxy to
@@ -265,6 +266,7 @@ func NewOAuthProxy(opts *Options, validator func(string) bool) *OAuthProxy {
 		CookieCipher:       cipher,
 		templates:          loadTemplates(opts.CustomTemplatesDir),
 		Footer:             opts.Footer,
+		SupressWarnings:    opts.SupressWarnings,
 	}
 }
 
@@ -424,7 +426,7 @@ func (p *OAuthProxy) makeCookie(req *http.Request, name string, value string, ex
 		if h, _, err := net.SplitHostPort(domain); err == nil {
 			domain = h
 		}
-		if !strings.HasSuffix(domain, p.CookieDomain) {
+		if !strings.HasSuffix(domain, p.CookieDomain) && p.SupressWarnings == false {
 			logger.Printf("Warning: request host is %q but using configured cookie domain of %q", domain, p.CookieDomain)
 		}
 	}
@@ -679,6 +681,7 @@ func (p *OAuthProxy) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
 		p.AuthenticateOnly(rw, req)
 	default:
 		p.Proxy(rw, req)
+
 	}
 }
 
