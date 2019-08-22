@@ -27,6 +27,7 @@ COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/oauth2_proxy /bin/oau
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/jwt_signing_key.pem /etc/ssl/private/jwt_signing_key.pem
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/live.cfg /
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/uat.cfg /
+COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/demo.cfg /
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/cbre/landx/templates /templates
 
 USER 2000:2000
