@@ -716,6 +716,11 @@ func (p *OAuthProxy) SignOut(rw http.ResponseWriter, req *http.Request) {
 
 // OAuthStart starts the OAuth2 authentication flow
 func (p *OAuthProxy) OAuthStart(rw http.ResponseWriter, req *http.Request) {
+	if req.Header.Get("x-oauth2-redirect") == "no-redirect" {
+		p.ErrorPage(rw, 403, "Forbidden, please login", "")
+		return
+	}
+
 	nonce, err := cookie.Nonce()
 	if err != nil {
 		logger.Printf("Error obtaining nonce: %s", err.Error())

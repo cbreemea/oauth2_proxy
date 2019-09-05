@@ -19,7 +19,7 @@ type Server struct {
 // TODO add ENABLE_CORS to config options
 func enableCors(handler http.Handler, allowedOrigin string) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+		w.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, x-csrf-token, x-oauth2-redirect")
 		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		handler.ServeHTTP(w, r)

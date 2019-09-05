@@ -26,8 +26,9 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifi
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/oauth2_proxy /bin/oauth2_proxy
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/jwt_signing_key.pem /etc/ssl/private/jwt_signing_key.pem
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/live.cfg /
+COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/uat.cfg /
 COPY --from=builder /go/src/github.com/pusher/oauth2_proxy/cbre/landx/templates /templates
 
 USER 2000:2000
 
-ENTRYPOINT ["/bin/oauth2_proxy",  "-config", "/live.cfg"]
+ENTRYPOINT ["/bin/oauth2_proxy",  "-config", "/uat.cfg"]
