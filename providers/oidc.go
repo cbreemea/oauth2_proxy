@@ -8,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 
 	oidc "github.com/coreos/go-oidc"
+	jwt "github.com/dgrijalva/jwt-go"
 )
 
 // OIDCProvider represents an OIDC based Identity Provider
@@ -104,19 +105,31 @@ func (p *OIDCProvider) createSessionState(ctx context.Context, token *oauth2.Tok
 		return nil, fmt.Errorf("could not verify id_token: %v", err)
 	}
 
+	claim := jwt.MapClaims{}
+	_, _ = jwt.ParseWithClaims(rawIDToken, claim, func(token *jwt.Token) (interface{}, error) {
+		return []byte(""), nil
+	})
+
+	fmt.Printf("\nclaim:\n%+v\n", claim)
+
 	// Extract custom claims.
 	var claims struct {
-		Subject  string `json:"sub"`
-		Email    string `json:"email"`
-		Verified *bool  `json:"email_verified"`
+		Subject  string   `json:"sub"`
+		Email    string   `json:"email"`
+		Emails   []string `json:"emails"`
+		Verified *bool    `json:"email_verified"`
 	}
 	if err := idToken.Claims(&claims); err != nil {
 		return nil, fmt.Errorf("failed to parse id_token claims: %v", err)
 	}
 
 	if claims.Email == "" {
-		// TODO: Try getting email from /userinfo before falling back to Subject
-		claims.Email = claims.Subject
+		if len(claims.Emails) > 0 {
+			claims.Email = claims.Emails[0]
+		} else {
+			// TODO: Try getting email from /userinfo before falling back to Subject
+			claims.Email = claims.Subject
+		}
 	}
 	if claims.Verified != nil && !*claims.Verified {
 		return nil, fmt.Errorf("email in id_token (%s) isn't verified", claims.Email)
