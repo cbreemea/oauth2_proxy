@@ -28,6 +28,7 @@ type Options struct {
 	AllowedOrigin   string `flag:"allowed-origin" cfg:"allowed_origin" env:"OAUTH2_PROXY_ALLOWED_ORIGIN"`
 	SupressWarnings bool   `flag:"supress-warnings" cfg:"supress_warnings" env:"OAUTH2_PROXY_SUPRESS_WARNINGS"`
 
+	PingPath        string `flag:"ping-path" cfg:"ping_path" env:"PING_PATH"`
 	ProxyPrefix     string `flag:"proxy-prefix" cfg:"proxy_prefix" env:"OAUTH2_PROXY_PROXY_PREFIX"`
 	ProxyWebSockets bool   `flag:"proxy-websockets" cfg:"proxy_websockets" env:"OAUTH2_PROXY_PROXY_WEBSOCKETS"`
 	HTTPAddress     string `flag:"http-address" cfg:"http_address" env:"OAUTH2_PROXY_HTTP_ADDRESS"`
@@ -163,6 +164,7 @@ func NewOptions() *Options {
 		AuthLogging:           true,
 		AuthLoggingFormat:     logger.DefaultAuthLoggingFormat,
 		SupressWarnings:       false,
+		PingPath:              "/ping",
 	}
 }
 
