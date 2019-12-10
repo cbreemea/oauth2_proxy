@@ -4,7 +4,7 @@ phases:
   pre_build:
     commands:
       - $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-      - IMAGE_URI=$REPOSITORY_URI/landx-gatekeeper
+      - IMAGE_URI=$REPOSITORY_URI/xds-gatekeeper
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
       - IMAGE_TAG=${COMMIT_HASH:=latest}
   build:
@@ -15,6 +15,6 @@ phases:
     commands:
       - docker push $IMAGE_URI:latest
       - docker push $IMAGE_URI:$IMAGE_TAG
-      - printf '[{"name":"landx-gatekeeper","imageUri":"%s"}]' $IMAGE_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"xds-gatekeeper","imageUri":"%s"}]' $IMAGE_URI:$IMAGE_TAG > imagedefinitions.json
 artifacts:
     files: imagedefinitions.json
