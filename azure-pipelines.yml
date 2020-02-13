@@ -1,0 +1,83 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+  branches:
+    include:
+    - xds_k8s
+  paths:
+    include:
+    - /*
+    exclude:
+    - /*.adoc
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  registryConnectionName: prod-xds-registry
+
+stages:
+- stage: buildGatekeeper
+  displayName: Build and push Gatekeeper Server stage
+  jobs:
+  - job: Build
+    displayName: Build job
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        containerRegistry: $(registryConnectionName)
+        repository: gatekeeper
+        Dockerfile: Dockerfile
+        tags: |
+          $(Build.BuildId)-dev
+
+- stage: deployGatekeeperdev
+  displayName: Deploy Gatekeeper Server to AKS dev
+  jobs:
+  - deployment:
+    displayName: Deploy Container to Dev
+    environment: prod-k8s-az.xds-dev
+    variables:
+      - name: TAG
+        value: $(Build.BuildId)-dev
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: self
+            persistCredentials: true
+
+          - script: |
+              envsubst '${TAG}' < gatekeeper/kubernetes/deployment-server-template.yaml > deployment-app.yaml
+            displayName: Replace Environment Variables
+
+          - task: Kubernetes@1
+            name: 'apply'
+            displayName: Deploy Container
+            inputs:
+              useConfigurationFile: true
+              namespace: 'xds-dev'
+              command: apply
+              configuration: deployment-app.yaml
+              outputFormat: "jsonpath={$.metadata.name}"
+
+          - task: Kubernetes@1
+            displayName: Check Deployment Status
+            inputs:
+              namespace: 'xds-dev'
+              command: rollout
+              arguments: status deployment/$(apply.KubectlOutput)
+
+          - task: Kubernetes@1
+            name: rollout_undo
+            # conditional execution
+            condition: failed()
+            inputs:
+              namespace: 'xds-dev'
+              command: rollout
+              arguments: undo deployment/$(apply.KubectlOutput)
