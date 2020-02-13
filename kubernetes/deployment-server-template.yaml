@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: addressesserver
+  name: gatekeeper
 spec:
   progressDeadlineSeconds: 60
   selector:
     matchLabels:
       app: gatekeeper
       tier: server
-  replicas: 2
+  replicas: 1
   template:
     metadata:
       labels:
@@ -21,7 +21,7 @@ spec:
         - "--cookie-httponly=true"
         - "--cookie-secure=true"
         - "--email-domain=*"
-        - "--http-address=0.0.0.0:80"
+        - "--http-address=0.0.0.0:4180"
         - "--provider=azure.v2"
         - "--proxy-prefix=/oauth2"
         - "--request-logging=true"
@@ -47,4 +47,4 @@ spec:
         name: gatekeeper
         image: cbrexds.azurecr.io/gatekeeper:${TAG}
         ports:
-        - containerPort: 80
+        - containerPort: 4180

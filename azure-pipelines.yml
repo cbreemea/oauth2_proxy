@@ -57,7 +57,17 @@ stages:
             displayName: Replace Environment Variables
 
           - task: Kubernetes@1
-            name: 'apply'
+            name: 'apply service'
+            displayName: Deploy Service
+            inputs:
+              useConfigurationFile: true
+              namespace: 'xds-dev'
+              command: apply
+              configuration: gatekeeper/kubernetes/service.yaml
+              outputFormat: "jsonpath={$.metadata.name}"
+
+          - task: Kubernetes@1
+            name: 'apply deployment'
             displayName: Deploy Container
             inputs:
               useConfigurationFile: true
