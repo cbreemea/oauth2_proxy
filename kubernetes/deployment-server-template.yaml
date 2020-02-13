@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: addressesserver
+spec:
+  progressDeadlineSeconds: 60
+  selector:
+    matchLabels:
+      app: gatekeeper
+      tier: server
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: gatekeeper
+        tier: server
+    spec:
+      containers:
+      - args:
+        - "--cookie-expire=1h"
+        - "--cookie-httponly=true"
+        - "--cookie-secure=true"
+        - "--email-domain=*"
+        - "--http-address=0.0.0.0:80"
+        - "--provider=azure.v2"
+        - "--proxy-prefix=/oauth2"
+        - "--request-logging=true"
+        - "--skip-auth-preflight=true"
+        - "--skip-oidc-discovery=true"
+        - "--skip-provider-button=true"
+        - "--supress-warnings=true"
+        env:
+        - name: OAUTH2_PROXY_AZURE_TENANT
+          value: $(azure-tenant)
+        - name: OAUTH2_PROXY_REDIRECT_URL
+          value: $(redirect-url)
+        - name: OAUTH2_PROXY_ALLOWED_ORIGIN
+          value: $(allowed-origin)
+        - name: OAUTH2_PROXY_UPSTREAMS
+          value: $(upstreams)
+        - name: OAUTH2_PROXY_CLIENT_ID
+          value: $(client-id)
+        - name: OAUTH2_PROXY_CLIENT_SECRET
+          value: $(client-secret)
+        - name: OAUTH2_PROXY_COOKIE_SECRET
+          value: $(cookie-secret)
+        name: gatekeeper
+        image: cbrexds.azurecr.io/gatekeeper:${TAG}
+        ports:
+        - containerPort: 80
